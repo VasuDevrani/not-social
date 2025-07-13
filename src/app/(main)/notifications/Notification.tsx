@@ -2,7 +2,7 @@ import UserAvatar from "@/components/UserAvatar";
 import { NotificationData } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { NotificationType } from "@prisma/client";
-import { Heart, MessageCircle, User2 } from "lucide-react";
+import { Heart, MessageCircle, User2, Laugh, Sparkle, Frown, Angry, ThumbsUp } from "lucide-react";
 import Link from "next/link";
 
 interface NotificationProps {
@@ -16,17 +16,42 @@ export default function Notification({ notification }: NotificationProps) {
   > = {
     FOLLOW: {
       message: `${notification.issuer.displayName} followed you`,
-      icon: <User2 className="size-7 text-primary" />,
+      icon: <User2 className="size-7" stroke="#58afed" />,
       href: `/users/${notification.issuer.username}`,
     },
     COMMENT: {
       message: `${notification.issuer.displayName} commented on your post`,
-      icon: <MessageCircle className="size-7 fill-primary text-primary" />,
+      icon: <MessageCircle className="size-7" stroke="#58afed" />,
       href: `/posts/${notification.postId}`,
     },
     LIKE: {
       message: `${notification.issuer.displayName} liked your post`,
-      icon: <Heart className="size-7 fill-red-500 text-red-500" />,
+      icon: <ThumbsUp className="size-7" stroke="#58afed" />,
+      href: `/posts/${notification.postId}`,
+    },
+    LOVE: {
+      message: `${notification.issuer.displayName} loved your post`,
+      icon: <Heart className="size-7" stroke="pink" />,
+      href: `/posts/${notification.postId}`,
+    },
+    LAUGH: {
+      message: `${notification.issuer.displayName} found your post funny`,
+      icon: <Laugh className="size-7" stroke="yellow" />,
+      href: `/posts/${notification.postId}`,
+    },
+    WOW: {
+      message: `${notification.issuer.displayName} was amazed by your post`,
+      icon: <Sparkle className="size-7" stroke="yellow" />,
+      href: `/posts/${notification.postId}`,
+    },
+    SAD: {
+      message: `${notification.issuer.displayName} found your post sad`,
+      icon: <Frown className="size-7" stroke="#a19c9c" />,
+      href: `/posts/${notification.postId}`,
+    },
+    ANGRY: {
+      message: `${notification.issuer.displayName} reacted angrily to your post`,
+      icon: <Angry className="size-7" stroke="#f02929" />,
       href: `/posts/${notification.postId}`,
     },
   };

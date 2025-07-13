@@ -1,6 +1,6 @@
 import { validateRequest } from "@/auth";
 import prisma from "@/lib/prisma";
-import { LikeInfo } from "@/lib/types";
+import { ReactionInfo, ReactionType } from "@/lib/types";
 
 export async function GET(
   req: Request,
@@ -16,17 +16,10 @@ export async function GET(
     const post = await prisma.post.findUnique({
       where: { id: postId },
       select: {
-        likes: {
-          where: {
-            userId: loggedInUser.id,
-          },
+        reactions: {
           select: {
             userId: true,
-          },
-        },
-        _count: {
-          select: {
-            likes: true,
+            type: true,
           },
         },
       },
@@ -36,9 +29,21 @@ export async function GET(
       return Response.json({ error: "Post not found" }, { status: 404 });
     }
 
-    const data: LikeInfo = {
-      likes: post._count.likes,
-      isLikedByUser: !!post.likes.length,
+    const userReaction = post.reactions.find(r => r.userId === loggedInUser.id);
+    const reactionCounts = post.reactions.reduce((acc, reaction) => {
+      acc[reaction.type] = (acc[reaction.type] || 0) + 1;
+      return acc;
+    }, {} as Record<ReactionType, number>);
+
+    // Initialize all reaction types with 0
+    const allReactionCounts: Record<ReactionType, number> = {
+      ...reactionCounts,
+    };
+
+    const data: ReactionInfo = {
+      reactions: post.reactions.length,
+      userReaction: userReaction?.type || null,
+      reactionCounts: { ...allReactionCounts, ...reactionCounts },
     };
 
     return Response.json(data);
@@ -59,6 +64,8 @@ export async function POST(
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { type } = await req.json() as { type: ReactionType };
+
     const post = await prisma.post.findUnique({
       where: { id: postId },
       select: {
@@ -71,19 +78,22 @@ export async function POST(
     }
 
     await prisma.$transaction([
-      prisma.like.upsert({
+      // Remove existing reaction if any
+      prisma.reaction.deleteMany({
         where: {
-          userId_postId: {
-            userId: loggedInUser.id,
-            postId,
-          },
-        },
-        create: {
           userId: loggedInUser.id,
           postId,
         },
-        update: {},
       }),
+      // Add new reaction
+      prisma.reaction.create({
+        data: {
+          userId: loggedInUser.id,
+          postId,
+          type,
+        },
+      }),
+      // Create notification if not own post
       ...(loggedInUser.id !== post.userId
         ? [
             prisma.notification.create({
@@ -91,7 +101,7 @@ export async function POST(
                 issuerId: loggedInUser.id,
                 recipientId: post.userId,
                 postId,
-                type: "LIKE",
+                type: type,
               },
             }),
           ]
@@ -128,7 +138,7 @@ export async function DELETE(
     }
 
     await prisma.$transaction([
-      prisma.like.deleteMany({
+      prisma.reaction.deleteMany({
         where: {
           userId: loggedInUser.id,
           postId,
@@ -139,7 +149,7 @@ export async function DELETE(
           issuerId: loggedInUser.id,
           recipientId: post.userId,
           postId,
-          type: "LIKE",
+          type: { in: ["LIKE", "LOVE", "LAUGH", "WOW", "SAD", "ANGRY"] },
         },
       }),
     ]);

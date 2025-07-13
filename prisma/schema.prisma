@@ -27,7 +27,7 @@ model User {
   posts                 Post[]
   following             Follow[]       @relation("Following")
   followers             Follow[]       @relation("Followers")
-  likes                 Like[]
+  reactions             Reaction[]
   bookmarks             Bookmark[]
   comments              Comment[]
   receivedNotifications Notification[] @relation("Recipient")
@@ -65,7 +65,7 @@ model Post {
   userId              String
   user                User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   attachments         Media[]
-  likes               Like[]
+  reactions           Reaction[]
   bookmarks           Bookmark[]
   comments            Comment[]
   linkedNotifications Notification[]
@@ -105,14 +105,27 @@ model Comment {
   @@map("comments")
 }
 
-model Like {
+model Reaction {
+  id       String      @id @default(cuid())
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   postId String
   post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  type   ReactionType
+
+  createdAt DateTime @default(now())
 
   @@unique([userId, postId])
-  @@map("likes")
+  @@map("reactions")
+}
+
+enum ReactionType {
+  LIKE
+  LOVE
+  LAUGH
+  WOW
+  SAD
+  ANGRY
 }
 
 model Bookmark {
@@ -146,6 +159,11 @@ model Notification {
 
 enum NotificationType {
   LIKE
+  LOVE
+  LAUGH
+  WOW
+  SAD
+  ANGRY
   FOLLOW
   COMMENT
 }

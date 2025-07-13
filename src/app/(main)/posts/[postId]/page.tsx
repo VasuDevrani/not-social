@@ -23,6 +23,7 @@ const getPost = cache(async (postId: string, loggedInUserId: string) => {
     },
     include: getPostDataInclude(loggedInUserId),
   });
+  console.log("Fetched post:", post);
 
   if (!post) notFound();
 

@@ -146,7 +146,7 @@ export class UserRecommendationService {
   }
 
   /**
-   * Strategy 2: Similar Interests based on likes and comments
+   * Strategy 2: Similar Interests based on reactions and comments
    */
   private static async getSimilarInterests(
     userId: string, 
@@ -167,8 +167,8 @@ export class UserRecommendationService {
       JOIN (
         -- Users who liked the same posts
         SELECT DISTINCT l2."userId"
-        FROM likes l1
-        JOIN likes l2 ON l1."postId" = l2."postId"
+        FROM reactions l1
+        JOIN reactions l2 ON l1."postId" = l2."postId" AND l1.type = 'LIKE' AND l2.type = 'LIKE'
         WHERE l1."userId" = ${userId} AND l2."userId" != ${userId}
         
         UNION
@@ -180,10 +180,10 @@ export class UserRecommendationService {
         WHERE c1."userId" = ${userId} AND c2."userId" != ${userId}
       ) similar_users ON similar_users."userId" = u.id
       JOIN posts p ON (
-        EXISTS (SELECT 1 FROM likes l WHERE l."userId" = ${userId} AND l."postId" = p.id) OR
+        EXISTS (SELECT 1 FROM reactions l WHERE l."userId" = ${userId} AND l."postId" = p.id AND l.type = 'LIKE') OR
         EXISTS (SELECT 1 FROM comments c WHERE c."userId" = ${userId} AND c."postId" = p.id)
       ) AND (
-        EXISTS (SELECT 1 FROM likes l WHERE l."userId" = u.id AND l."postId" = p.id) OR
+        EXISTS (SELECT 1 FROM reactions l WHERE l."userId" = u.id AND l."postId" = p.id AND l.type = 'LIKE') OR
         EXISTS (SELECT 1 FROM comments c WHERE c."userId" = u.id AND c."postId" = p.id)
       )
       LEFT JOIN (
