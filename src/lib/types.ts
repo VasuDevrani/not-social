@@ -131,3 +131,9 @@ export interface NotificationCountInfo {
 export interface MessageCountInfo {
   unreadCount: number;
 }
+
+export interface RecommendationData {
+  user: UserData;
+  score: number;
+  reason: string;
+}

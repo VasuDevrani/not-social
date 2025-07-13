@@ -32,6 +32,8 @@ model User {
   comments              Comment[]
   receivedNotifications Notification[] @relation("Recipient")
   issuedNotifications   Notification[] @relation("Issuer")
+  recommendations       UserRecommendation[] @relation("UserRecommendations")
+  recommendedTo         UserRecommendation[] @relation("RecommendedTo")
 
   createdAt DateTime @default(now())
 
@@ -146,4 +148,18 @@ enum NotificationType {
   LIKE
   FOLLOW
   COMMENT
+}
+
+model UserRecommendation {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation("UserRecommendations", fields: [userId], references: [id], onDelete: Cascade)
+  recommendedId String
+  recommended   User     @relation("RecommendedTo", fields: [recommendedId], references: [id], onDelete: Cascade)
+  score         Float    // Recommendation strength score
+  dismissed     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  @@unique([userId, recommendedId])
+  @@map("user_recommendations")
 }
