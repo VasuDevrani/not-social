@@ -35,12 +35,10 @@ export function getPostDataInclude(loggedInUserId: string) {
       select: getUserDataSelect(loggedInUserId),
     },
     attachments: true,
-    likes: {
-      where: {
-        userId: loggedInUserId,
-      },
+    reactions: {
       select: {
         userId: true,
+        type: true,
       },
     },
     bookmarks: {
@@ -53,7 +51,7 @@ export function getPostDataInclude(loggedInUserId: string) {
     },
     _count: {
       select: {
-        likes: true,
+        reactions: true,
         comments: true,
       },
     },
@@ -115,9 +113,12 @@ export interface FollowerInfo {
   isFollowedByUser: boolean;
 }
 
-export interface LikeInfo {
-  likes: number;
-  isLikedByUser: boolean;
+export type ReactionType = 'LIKE' | 'LOVE' | 'LAUGH' | 'WOW' | 'SAD' | 'ANGRY';
+
+export interface ReactionInfo {
+  reactions: number;
+  userReaction: ReactionType | null;
+  reactionCounts: Record<ReactionType, number>;
 }
 
 export interface BookmarkInfo {
@@ -130,6 +131,29 @@ export interface NotificationCountInfo {
 
 export interface MessageCountInfo {
   unreadCount: number;
+}
+
+export function getReactionInfo(
+  reactions: Array<{ userId: string; type: ReactionType }>,
+  loggedInUserId: string
+): ReactionInfo {
+  const userReaction = reactions.find(r => r.userId === loggedInUserId);
+  const reactionCounts = reactions.reduce((acc, reaction) => {
+    acc[reaction.type] = (acc[reaction.type] || 0) + 1;
+    return acc;
+  }, {} as Record<ReactionType, number>);
+  console.log("Reaction counts:", reactionCounts);
+
+  // Initialize all reaction types with 0
+  const allReactionCounts: Record<ReactionType, number> = {
+    ...reactionCounts,
+  };
+
+  return {
+    reactions: reactions.length,
+    userReaction: userReaction?.type || null,
+    reactionCounts: allReactionCounts,
+  };
 }
 
 export interface RecommendationData {

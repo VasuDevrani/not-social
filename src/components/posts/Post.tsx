@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession } from "@/app/(main)/SessionProvider";
-import { PostData } from "@/lib/types";
+import { PostData, getReactionInfo } from "@/lib/types";
 import { cn, formatRelativeDate } from "@/lib/utils";
 import { Media } from "@prisma/client";
 import { MessageSquare } from "lucide-react";
@@ -13,7 +13,7 @@ import Linkify from "../Linkify";
 import UserAvatar from "../UserAvatar";
 import UserTooltip from "../UserTooltip";
 import BookmarkButton from "./BookmarkButton";
-import LikeButton from "./LikeButton";
+import ReactionButton from "./ReactionButton";
 import PostMoreButton from "./PostMoreButton";
 
 interface PostProps {
@@ -68,12 +68,9 @@ export default function Post({ post }: PostProps) {
       <hr className="text-muted-foreground" />
       <div className="flex justify-between gap-5">
         <div className="flex items-center gap-5">
-          <LikeButton
+          <ReactionButton
             postId={post.id}
-            initialState={{
-              likes: post._count.likes,
-              isLikedByUser: post.likes.some((like) => like.userId === user.id),
-            }}
+            initialState={getReactionInfo(post.reactions, user.id)}
           />
           <CommentButton
             post={post}
